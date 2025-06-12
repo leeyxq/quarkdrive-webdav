@@ -1,0 +1,14 @@
+[package]
+name = "quarkdrive-webdav"
+version = "0.1.0"
+edition = "2024"
+
+description = "A WebDAV client for quarkdriver"
+authors = ["chenqimiao1994@126.com"]
+license = "MIT"
+homepage = "https://github.com/chenqimiao/quarkdrive-webdav"
+repository = "https://github.com/chenqimiao/quarkdrive-webdav.git"
+readme = "README.md"
+
+[dependencies]
+dav-server = { version = "0.8.0", default-features = false, features = ["hyper"] }
