@@ -12,3 +12,67 @@ readme = "README.md"
 
 [dependencies]
 dav-server = { version = "0.8.0", default-features = false, features = ["hyper"] }
+tokio = { version = "1.45.1", features = ["full"] }
+futures-util = "0.3.31"
+clap = { version = "4.5.40", features = ["derive", "default"] }
+reqwest = { version = "0.12.20", features = ["rustls-tls"] }
+reqwest-middleware = { version = "0.4.2", features = ["json"] }
+reqwest-retry = "0.7"
+reqwest-tracing = "0.5.7"
+serde = { version = "1.0.219", features = ["derive"] }
+anyhow = "1.0.98"
+tracing = "0.1.41"
+time = "0.3.41"
+bytes = "1.10.1"
+moka = { version = "0.12.10", features = ["future"] }
+dashmap = "7.0.0-rc2"
+zip = "4.0.0"
+url = "2.5.4"
+path-slash = "0.2.1"
+headers = "0.4.1"
+hyper = {version = "1.6.0", features = ["full"]}
+http = "0.2.10"
+hyper-util = { version = "0.1.14", features = ["server"] }
+rustls-pemfile = {version = "2.2.0", optional = true}
+#tls-listener = { version = "0.11.0", features = ["hyper-h1", "hyper-h2", "rt"], optional = true }
+tokio-rustls = { version = "0.26.2", optional = true }
+
+tracing-subscriber = {version = "0.3.19", features = ["env-filter"]}
+signal-hook = {version = "0.3.18", features = ["default"]}
+signal-hook-tokio = "0.3.1"
+openssl-probe = {version = "0.1.6", optional = true}
+dirs = "6.0.0"
+serde_json = "1.0.140"
+atty = "0.2.14"
+self_update = "0.42.0"
+
+
+[features]
+default = ["rustls-tls", "atomic64"]
+rustls-tls = ["reqwest/rustls-tls", "rustls-pemfile", "tokio-rustls", "self_update/rustls"]
+native-tls = ["reqwest/native-tls"]
+native-tls-vendored = ["reqwest/native-tls-vendored", "openssl-probe"]
+atomic64 = ["moka/atomic64"]
+
+[profile.release]
+lto = true
+
+[package.metadata.deb]
+maintainer = "messense <messense@icloud.com>"
+copyright = "2021-present, messense <messense@icloud.com>"
+license-file = ["LICENSE", "4"]
+extended-description = """\
+WebDAV server for AliyunDrive"""
+section = "utility"
+priority = "optional"
+assets = [
+    ["target/release/aliyundrive-webdav", "usr/bin/", "755"],
+    ["systemd.service", "etc/systemd/system/aliyundrive-webdav.service", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/quarkdrive-webdav", dest = "/usr/bin/quarkdrive-webdav", mode = "0755" },
+    { source = "LICENSE", dest = "/usr/share/doc/quarkdrive-webdav/LICENSE", doc = true, mode = "0644" },
+    { source = "systemd.service", dest = "/etc/systemd/system/quarkdrive-webdav.service", config = true, mode = "0644" },
+]
