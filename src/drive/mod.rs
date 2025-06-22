@@ -51,7 +51,7 @@ impl DavMetaData for QuarkFile {
     }
 
     fn modified(&self) -> FsResult<SystemTime> {
-        Ok(SystemTime::UNIX_EPOCH + Duration::from_secs(self.updated_at))
+        Ok(SystemTime::UNIX_EPOCH + Duration::from_millis(self.updated_at))
     }
 
     fn is_dir(&self) -> bool {
@@ -59,7 +59,7 @@ impl DavMetaData for QuarkFile {
     }
 
     fn created(&self) -> FsResult<SystemTime> {
-       Ok(SystemTime::UNIX_EPOCH + Duration::from_secs(self.created_at))
+       Ok(SystemTime::UNIX_EPOCH + Duration::from_millis(self.created_at))
     }
 }
 
@@ -227,7 +227,7 @@ impl QuarkDrive {
     }
 
 
-    pub async fn get_files_by_pdir_fid(&self, pdir_fid: &str, page:u32, size:u32) -> Result<Option<QuarkFiles>> {
+    pub async fn get_files_by_pdir_fid(&self, pdir_fid: &str, page:u32, size:u32) -> Result<(Option<QuarkFiles>, u32)> {
         debug!(pdir_fid = %pdir_fid, page = %page, size = %size,  "get file");
 
         let res: Result<GetFilesResponse> = self
@@ -241,11 +241,14 @@ impl QuarkDrive {
             .await
             .and_then(|res| res.context("unexpect response"));
         match res {
-            Ok(files_res) => Ok(Some(files_res.into())),
+            Ok(files_res) =>{
+                let page = files_res.metadata.page;
+                Ok((Some(files_res.into()), page))
+            },
             Err(err) => {
                 if let Some(req_err) = err.downcast_ref::<reqwest::Error>() {
                     if matches!(req_err.status(), Some(StatusCode::NOT_FOUND)) {
-                        Ok(None)
+                        Ok((None, 0u32))
                     } else {
                         Err(err)
                     }
@@ -259,6 +262,8 @@ impl QuarkDrive {
     pub async fn get_download_urls(&self, fids: Vec<String>) -> Result<HashMap<String, String>> {
         debug!(fids = ?fids, "get download url");
         let req = GetFilesDownloadUrlsRequest { fids };
+        // replace web api by client api: web api has some limits.
+        // TODO 
         let res: GetFilesDownloadUrlsResponse = self
             .post_request(
                 format!(
@@ -314,7 +319,7 @@ mod tests {
             cookie: Some(std::env::var("quark_cookie").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
-        let files = drive.get_files_by_pdir_fid("0", 1, 50).await.unwrap();
+        let (files, _page) = drive.get_files_by_pdir_fid("0", 1, 50).await.unwrap();
         assert!(files.is_some());
         println!("{:?}", files);
     }

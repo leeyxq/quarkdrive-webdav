@@ -316,6 +316,7 @@ impl Debug for QuarkDavFile {
 }
 
 impl QuarkDavFile {
+    
     fn new(
         fs: QuarkDriveFileSystem,
         file: QuarkFile,
@@ -402,13 +403,59 @@ impl DavFile for QuarkDavFile {
     }
 
     fn read_bytes(&mut self, count: usize) -> FsFuture<Bytes> {
-        todo!()
+        debug!(
+            file_id = %self.file.fid,
+            file_name = %self.file.file_name,
+            pos = self.current_pos,
+            count = count,
+            size = self.file.size,
+            "file: read_bytes",
+        );
+        async move {
+            if self.file.fid.is_empty() {
+                // upload in progress
+                return Err(FsError::NotFound);
+            }
+            // 检查现有 URL 是否有效
+            let is_valid = self.file.download_url.as_ref()
+                .map(|url| !is_url_expired(url))
+                .unwrap_or(false);
+
+            if !is_valid {
+                let new_url = self.get_download_url().await.unwrap();
+                self.file.download_url = Some(new_url);
+            }
+            let download_url = match self.file.download_url.as_ref() {
+                Some(url) => url,
+                None => {
+                        // 详细记录文件信息
+                        println!(
+                        "文件缺少下载URL: {:?}\n文件元数据: {:#?}",
+                        self.file.download_url,
+                        self.file);
+                    return Err(dav_server::fs::FsError::NotFound);
+                }
+            };
+            let download_url =  self.file.download_url.as_ref().expect("download url missing!");
+            
+
+            if !download_url.is_empty() {
+                let content = self.fs.drive.download(download_url, Some((self.current_pos, count))).await.unwrap();
+                self.current_pos += content.len() as u64;
+                return Ok(content);
+            }else {
+                return Err(FsError::NotFound);
+            }
+        }
+            .boxed()
     }
 
     fn flush(&mut self) -> FsFuture<()> {
         todo!()
     }
 }
+
+
 
 fn is_url_expired(url: &str) -> bool {
     if let Ok(oss_url) = ::url::Url::parse(url) {

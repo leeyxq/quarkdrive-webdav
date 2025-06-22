@@ -22,6 +22,9 @@ mod drive;
 mod vfs;
 mod webdav;
 
+use env_logger::Builder;
+
+
 #[derive(Parser, Debug)]
 #[command(name = "quarkdrive-webdav", about, version, author)]
 #[command(args_conflicts_with_subcommands = true)]
@@ -125,13 +128,12 @@ enum QrCommand {
 async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "native-tls-vendored")]
     openssl_probe::init_ssl_cert_env_vars();
-
     let opt = Opt::parse();
     if env::var("RUST_LOG").is_err() {
         if opt.debug {
-            unsafe { env::set_var("RUST_LOG", "quarkdriver_webdav=debug,reqwest=debug"); }
+            unsafe { env::set_var("RUST_LOG", "quarkdrive_webdav=debug,reqwest=debug"); }
         } else {
-            unsafe { env::set_var("RUST_LOG", "quarkdriver_webdav=info,reqwest=warn"); }
+            unsafe { env::set_var("RUST_LOG", "quarkdrive_webdav=info,reqwest=warn"); }
         }
     }
     tracing_subscriber::fmt()
@@ -161,13 +163,14 @@ async fn main() -> anyhow::Result<()> {
         (None, None) => None,
         _ => bail!("tls-cert and tls-key must be specified together."),
     };
-    let drive = QuarkDrive::new(drive_config).await?;
+    let drive = QuarkDrive::new(drive_config)?;
     let mut fs = QuarkDriveFileSystem::new(drive, opt.root, opt.cache_size, opt.cache_ttl)?;
     fs.set_no_trash(opt.no_trash)
         .set_read_only(opt.read_only)
         .set_upload_buffer_size(opt.upload_buffer_size)
         .set_skip_upload_same_size(opt.skip_upload_same_size)
         .set_prefer_http_download(opt.prefer_http_download);
+    fs.dir_cache.refresh_cache().await;
     debug!("quarkdriver file system initialized");
 
     #[cfg(unix)]
@@ -215,4 +218,17 @@ async fn main() -> anyhow::Result<()> {
         signals_task.await?;
     }
     Ok(())
+}
+
+#[cfg(unix)]
+async fn handle_signals(mut signals: Signals, dir_cache: Cache) {
+    while let Some(signal) = signals.next().await {
+        match signal {
+            SIGHUP => {
+                dir_cache.invalidate_all();
+                info!("directory cache invalidated by SIGHUP");
+            }
+            _ => unreachable!(),
+        }
+    }
 }

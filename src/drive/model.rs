@@ -15,6 +15,7 @@ pub struct QuarkFile {
     pub updated_at: u64,
     pub dir: bool,
     pub file: bool,
+    pub download_url:Option<String>,
 }
 
 
@@ -32,6 +33,7 @@ impl QuarkFile {
             file: false,
             file_name: "/".to_string(),
             fid: "0".to_string(),
+            download_url: None,
         }
     }
 }
@@ -98,6 +100,9 @@ pub struct FilesMetadata {
     pub total: u32,
     #[serde(rename = "_count")]
     pub count: u32,
+    #[serde(rename = "_page")]
+    pub page: u32,
+    
 }
 #[derive(Debug, Clone, Deserialize)]
 pub struct QuarkFiles {
