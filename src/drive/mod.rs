@@ -30,7 +30,7 @@ pub use model::{QuarkFile};
 
 const ORIGIN: &str = "https://pan.quark.cn";
 const REFERER: &str = "https://pan.quark.cn/";
-const UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36";
+const UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) quark-cloud-drive/2.5.20 Chrome/100.0.4896.160 Electron/18.3.5.4-b478491100 Safari/537.36 Channel/pckk_other_ch";
 
 
 #[derive(Debug, Clone)]
@@ -232,7 +232,7 @@ impl QuarkDrive {
 
         let res: Result<GetFilesResponse> = self
             .get_request(
-                format!("{}/1/clouddrive/file/sort?pr=ucpro&fr=pc&uc_param_str=&pdir_fid={}&_page={}&_size={}&_fetch_total=1&_fetch_sub_dirs=0&_sort=file_type:asc,updated_at:desc,"
+                format!("{}/1/clouddrive/file/sort?pr=ucpro&fr=pc&&pdir_fid={}&_page={}&_size={}&_fetch_total=1&_fetch_sub_dirs=0&_sort=file_type:asc,updated_at:desc,"
                         , self.config.api_base_url
                         , pdir_fid
                         , page
@@ -262,12 +262,10 @@ impl QuarkDrive {
     pub async fn get_download_urls(&self, fids: Vec<String>) -> Result<HashMap<String, String>> {
         debug!(fids = ?fids, "get download url");
         let req = GetFilesDownloadUrlsRequest { fids };
-        // replace web api by client api: web api has some limits.
-        // TODO 
         let res: GetFilesDownloadUrlsResponse = self
             .post_request(
                 format!(
-                    "{}/1/clouddrive/file/download?pr=ucpro&fr=pc&uc_param_str=",
+                    "{}/1/clouddrive/file/download?pr=ucpro&fr=pc",
                     self.config.api_base_url
                 ),
                 &req,
@@ -315,7 +313,7 @@ mod tests {
     #[tokio::test]
     async fn test_get_files_by_pdir_fid() {
         let config = DriveConfig {
-            api_base_url: "https://drive-pc.quark.cn".to_string(),
+            api_base_url: "https://drive.quark.cn".to_string(),
             cookie: Some(std::env::var("quark_cookie").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
@@ -328,11 +326,11 @@ mod tests {
     #[tokio::test]
     async fn test_get_download_urls() {
         let config = DriveConfig {
-            api_base_url: "https://drive-pc.quark.cn".to_string(),
+            api_base_url: "https://drive.quark.cn".to_string(),
             cookie: Some(std::env::var("quark_cookie").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
-        let fids = vec!["you file id".to_string()];
+        let fids = vec!["your fid".to_string()];
         let res = drive.get_download_urls(fids).await.unwrap();
         assert!(!res.is_empty());
         println!("{:#?}", res);
@@ -341,7 +339,7 @@ mod tests {
     #[tokio::test]
     async fn test_download() {
         let config = DriveConfig {
-            api_base_url: "https://drive-pc.quark.cn".to_string(),
+            api_base_url: "https://drive.quark.cn".to_string(),
             cookie: Some(std::env::var("quark_cookie").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();

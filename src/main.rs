@@ -145,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
         .workdir
         .or_else(|| dirs::cache_dir().map(|c| c.join("quarkdriver-webdav")));
     let drive_config = DriveConfig {
-        api_base_url: "https://drive-pc.quark.cn".to_string(),
+        api_base_url: "https://drive.quark.cn".to_string(),
         cookie: opt.quark_cookie.clone(),
     };
     

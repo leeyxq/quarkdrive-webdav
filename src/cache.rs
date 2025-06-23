@@ -22,7 +22,7 @@ impl Cache {
             .build();
 
         let config = DriveConfig {
-            api_base_url: "https://drive-pc.quark.cn".to_string(),
+            api_base_url: "https://drive.quark.cn".to_string(),
             cookie: Some(std::env::var("quark_cookie").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
