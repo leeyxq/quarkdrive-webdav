@@ -23,5 +23,5 @@ jobs:
       - name: 构建并推送 Docker 镜像
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/quarkdrive-webdav:latest
-          docker build -t $IMAGE_NAME -f docker/Dockerfile
+          docker build -t $IMAGE_NAME -f docker/Dockerfile .
           docker push $IMAGE_NAME
