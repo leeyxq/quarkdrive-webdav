@@ -24,7 +24,7 @@ jobs:
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          if [[ "${{ github.event.inputs.ref }}" == "main" ]]; then
+          if [[ -z "${{ github.event.inputs.ref }}" || "${{ github.event.inputs.ref }}" == "main" ]]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
           else
             echo "tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
