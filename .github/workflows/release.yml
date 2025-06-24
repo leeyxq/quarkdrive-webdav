@@ -2,7 +2,11 @@ name: Build binary package
 
 on:
   workflow_dispatch:
-    inputs: {}
+    inputs:
+      release_body:
+        description: 'Release 描述（可选）'
+        required: false
+        default: ''
   push:
     tags:
       - '*'
