@@ -7,6 +7,10 @@ on:
         description: '选择要构建的分支或 tag'
         required: true
         default: 'main'
+      docker_version:
+        description: '手动指定 Docker 版本（可选，main 分支默认 latest，其它分支/tag 默认与 ref 一致）'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -24,7 +28,9 @@ jobs:
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          if [[ -z "${{ github.event.inputs.ref }}" || "${{ github.event.inputs.ref }}" == "main" ]]; then
+          if [[ -n "${{ github.event.inputs.docker_version }}" ]]; then
+            echo "tag=${{ github.event.inputs.docker_version }}" >> $GITHUB_OUTPUT
+          elif [[ -z "${{ github.event.inputs.ref }}" || "${{ github.event.inputs.ref }}" == "main" ]]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
           else
             echo "tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
