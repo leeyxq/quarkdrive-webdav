@@ -1,24 +1,15 @@
-# 构建阶段
-FROM rustlang/rust:nightly as builder
+# 构建阶段：用 Alpine 保证 musl+openssl 兼容
+FROM alpine:3.19 as builder
 
-ARG TARGET=x86_64-unknown-linux-musl
-
+RUN apk add --no-cache build-base musl-dev openssl-dev pkgconf cargo rustup strip
 WORKDIR /app
 COPY . .
+RUN cargo build --release && strip target/release/quarkdrive-webdav
 
-RUN apt-get update && \
-    apt-get install -y musl-tools musl-dev pkg-config libssl-dev && \
-    rustup target add ${TARGET} && \
-    export PKG_CONFIG_ALLOW_CROSS=1 && \
-    export OPENSSL_STATIC=1 && \
-    cargo build --release --target ${TARGET} && \
-    strip target/${TARGET}/release/quarkdrive-webdav
-
-# 运行阶段（极简）
-FROM alpine:latest
+# 运行阶段：极简
+FROM alpine:3.19
 RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
-ARG TARGET=x86_64-unknown-linux-musl
-COPY --from=builder /app/target/${TARGET}/release/quarkdrive-webdav /usr/local/bin/quarkdrive-webdav
+COPY --from=builder /app/target/release/quarkdrive-webdav /usr/local/bin/quarkdrive-webdav
 USER app
 ENTRYPOINT ["/usr/local/bin/quarkdrive-webdav"]
