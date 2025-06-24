@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         # 默认检出 main 分支，用户可在 docker_version 中手动指定 tag/分支名
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: 输出 Docker 版本
         run: docker version
