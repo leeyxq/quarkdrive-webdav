@@ -7,8 +7,10 @@ WORKDIR /app
 COPY . .
 
 RUN apt-get update && \
-    apt-get install -y musl-tools && \
+    apt-get install -y musl-tools musl-dev pkg-config libssl-dev && \
     rustup target add ${TARGET} && \
+    export PKG_CONFIG_ALLOW_CROSS=1 && \
+    export OPENSSL_STATIC=1 && \
     cargo build --release --target ${TARGET} && \
     strip target/${TARGET}/release/quarkdrive-webdav
 
