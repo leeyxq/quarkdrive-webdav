@@ -3,14 +3,13 @@ name: Build and Push Docker image
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: '选择要构建的分支或 tag'
-        required: true
-        default: 'main'
       docker_version:
         description: 'Docker 版本（main 分支为 latest，其它分支/tag 与 ref 一致，可手动修改）'
         required: false
         default: 'latest'
+  push:
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -19,8 +18,9 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        # 默认检出 main 分支，用户可在 docker_version 中手动指定 tag/分支名
         with:
-          ref: ${{ github.event.inputs.ref }}
+          ref: main
 
       - name: 输出 Docker 版本
         run: docker version
@@ -28,14 +28,16 @@ jobs:
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          tag_input="${{ github.event.inputs.docker_version }}"
-          ref_input="${{ github.event.inputs.ref }}"
-          if [[ -n "$tag_input" ]]; then
-            echo "tag=$tag_input" >> $GITHUB_OUTPUT
-          elif [[ "$ref_input" == "main" ]]; then
-            echo "tag=latest" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+            tag_name="${GITHUB_REF##*/}"
+            echo "tag=$tag_name" >> $GITHUB_OUTPUT
           else
-            echo "tag=$ref_input" >> $GITHUB_OUTPUT
+            tag_input="${{ github.event.inputs.docker_version }}"
+            if [[ -n "$tag_input" ]]; then
+              echo "tag=$tag_input" >> $GITHUB_OUTPUT
+            else
+              echo "tag=latest" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: 登录 GitHub 容器注册表
