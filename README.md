@@ -43,7 +43,7 @@ docker run -d --name=quarkdrive-webdav --restart=unless-stopped -p 8080:8080 \
 
 
 
-点击 Create (创建)后启动，用webdav客户端连接http://nas地址:8080 即可
+启动后，用webdav客户端连接http://nas地址:8080 即可
 
 ## 🚨 免责声明
 
