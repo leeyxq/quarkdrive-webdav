@@ -1,5 +1,5 @@
 # 使用官方 Rust 镜像进行构建
-FROM rust:1.77 as builder
+FROM rustlang/rust:nightly as builder
 
 WORKDIR /app
 COPY . .
