@@ -240,8 +240,8 @@ impl QuarkDrive {
             .and_then(|res| res.context("unexpect response"));
         match res {
             Ok(files_res) =>{
-                let page = files_res.metadata.page;
-                Ok((Some(files_res.into()), page))
+                let total = files_res.metadata.total;
+                Ok((Some(files_res.into()), total))
             },
             Err(err) => {
                 if let Some(req_err) = err.downcast_ref::<reqwest::Error>() {
@@ -315,7 +315,7 @@ mod tests {
             cookie: Some(std::env::var("QUARK_COOKIE").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
-        let (files, _page) = drive.get_files_by_pdir_fid("0", 1, 50).await.unwrap();
+        let (files, _total) = drive.get_files_by_pdir_fid("0", 1, 50).await.unwrap();
         assert!(files.is_some());
         println!("{:?}", files);
     }

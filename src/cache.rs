@@ -56,11 +56,11 @@ impl Cache {
         if file.dir {
             let mut current_files = Vec::<QuarkFile>::new();
             for page_no in 1..=1000 {
-                let (files, total_page) = self.drive.get_files_by_pdir_fid(&file.fid, page_no, ONE_PAGE).await.unwrap();
+                let (files, total) = self.drive.get_files_by_pdir_fid(&file.fid, page_no, ONE_PAGE).await.unwrap();
                 let files = files.unwrap();
                 let size = files.list.len();
                 current_files.extend(files.list);
-                if size < ONE_PAGE as usize || page_no >= total_page   {
+                if size < ONE_PAGE as usize || page_no >= total / ONE_PAGE + 1   {
                     break;
                 }
             }
