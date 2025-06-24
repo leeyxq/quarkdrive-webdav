@@ -1,7 +1,7 @@
 # 构建阶段：用 Alpine 保证 musl+openssl 兼容
 FROM alpine:3.19 as builder
 
-RUN apk add --no-cache build-base musl-dev openssl-dev pkgconf cargo rustup strip
+RUN apk add --no-cache build-base musl-dev openssl-dev pkgconf cargo rustup binutils
 WORKDIR /app
 COPY . .
 RUN cargo build --release && strip target/release/quarkdrive-webdav
