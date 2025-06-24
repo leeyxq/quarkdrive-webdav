@@ -1,10 +1,12 @@
 name: Build and Push Docker image
 
 on:
-  push:
-    branches:
-      - '**'
   workflow_dispatch:
+    inputs:
+      ref:
+        description: '选择要构建的分支或 tag'
+        required: true
+        default: 'main'
 
 jobs:
   build:
@@ -13,14 +15,19 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: 输出 Docker 版本
+        run: docker version
 
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+          if [[ "${{ github.event.inputs.ref }}" == "main" ]]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
           else
-            echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
           fi
 
       - name: 登录 GitHub 容器注册表
