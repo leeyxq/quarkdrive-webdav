@@ -10,7 +10,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 # 创建工作目录并提前下载依赖
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock src ./
 RUN cargo fetch
 
 # 复制代码并编译 release 版本
