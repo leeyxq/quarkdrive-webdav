@@ -11,9 +11,11 @@
 
 如果项目对你有帮助，欢迎 Star 或者赞助我，以支持本项目的继续开发
 
+## 支付码
+
 <p align="center">
-  <img src="https://github.com/chenqimiao/chenqimiao/raw/main/pic/alipay.JPG" alt="alipay" width="200" height="200" style="margin-right: 20px;"/>
-  <img src="https://github.com/chenqimiao/chenqimiao/raw/main/pic/wechat_pay.JPG" alt="wechat_pay" width="200" height="200"/>
+  <img src="https://github.com/chenqimiao/chenqimiao/raw/main/pic/alipay.JPG" alt="alipay" width="200" height="260" style="margin-right: 20px;"/>
+  <img src="https://github.com/chenqimiao/chenqimiao/raw/main/pic/wechat_pay.JPG" alt="wechat_pay" width="200" height="260"/>
 </p>
 
 
