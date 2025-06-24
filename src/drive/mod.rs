@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use model::*;
@@ -10,7 +9,7 @@ use anyhow::{Context, Result};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use tokio::time;
-use tracing::{debug, error, info, warn};
+use tracing::{debug};
 
 use reqwest::{
     header::{HeaderMap, HeaderValue},
@@ -25,7 +24,6 @@ use moka::future::FutureExt;
 
 pub mod model;
 
-use model::*;
 pub use model::{QuarkFile};
 
 const ORIGIN: &str = "https://pan.quark.cn";
@@ -80,7 +78,7 @@ impl QuarkDrive {
         let mut headers = HeaderMap::new();
         headers.insert("Origin", HeaderValue::from_static(ORIGIN));
         headers.insert("Referer", HeaderValue::from_static(REFERER));
-        let cookie = config.cookie.as_ref().expect("Please set quark_cookie in config!");
+        let cookie = config.cookie.as_ref().expect("Please set QUARK_COOKIE in config!");
         headers.insert("Cookie", HeaderValue::from_str(cookie)?);
         let retry_policy = ExponentialBackoff::builder()
             .retry_bounds(Duration::from_secs(3), Duration::from_secs(7))
@@ -136,7 +134,7 @@ impl QuarkDrive {
                 debug!(error = %err_msg, url = %url, "request failed");
                 match err.status() {
                     Some(
-                        status_code
+                        _status_code
                         @
                         // 4xx
                         ( StatusCode::REQUEST_TIMEOUT
@@ -196,7 +194,7 @@ impl QuarkDrive {
                 debug!(error = %err_msg, url = %url, "request failed");
                 match err.status() {
                     Some(
-                        status_code
+                        _status_code
                         @
                         // 4xx
                         ( StatusCode::REQUEST_TIMEOUT
@@ -314,7 +312,7 @@ mod tests {
     async fn test_get_files_by_pdir_fid() {
         let config = DriveConfig {
             api_base_url: "https://drive.quark.cn".to_string(),
-            cookie: Some(std::env::var("quark_cookie").unwrap()),
+            cookie: Some(std::env::var("QUARK_COOKIE").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
         let (files, _page) = drive.get_files_by_pdir_fid("0", 1, 50).await.unwrap();
@@ -327,7 +325,7 @@ mod tests {
     async fn test_get_download_urls() {
         let config = DriveConfig {
             api_base_url: "https://drive.quark.cn".to_string(),
-            cookie: Some(std::env::var("quark_cookie").unwrap()),
+            cookie: Some(std::env::var("QUARK_COOKIE").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
         let fids = vec!["your fid".to_string()];
@@ -340,7 +338,7 @@ mod tests {
     async fn test_download() {
         let config = DriveConfig {
             api_base_url: "https://drive.quark.cn".to_string(),
-            cookie: Some(std::env::var("quark_cookie").unwrap()),
+            cookie: Some(std::env::var("QUARK_COOKIE").unwrap()),
         };
         let drive = QuarkDrive::new(config).unwrap();
         let url = "";

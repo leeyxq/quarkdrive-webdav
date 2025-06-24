@@ -1,13 +1,13 @@
 use std::env;
 use std::path::PathBuf;
-
+use std::sync::{Arc};
+use std::time::Duration;
 use anyhow::bail;
 use clap::{Parser, Subcommand};
 use dav_server::{memls::MemLs, DavHandler};
 #[cfg(unix)]
 use futures_util::stream::StreamExt;
-use self_update::cargo_crate_version;
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 use tracing_subscriber::EnvFilter;
 #[cfg(unix)]
 use {signal_hook::consts::signal::*, signal_hook_tokio::Signals};
@@ -22,8 +22,7 @@ mod drive;
 mod vfs;
 mod webdav;
 
-use env_logger::Builder;
-
+use tokio::time::interval;
 
 #[derive(Parser, Debug)]
 #[command(name = "quarkdrive-webdav", about, version, author)]
@@ -37,7 +36,7 @@ struct Opt {
     port: u16,
 
     ///  drive client_secret
-    #[arg(long, env = "quark_cookie")]
+    #[arg(long, env = "QUARK_COOKIE")]
     quark_cookie: Option<String>,
 
     /// WebDAV authentication username
@@ -64,9 +63,6 @@ struct Opt {
     /// Root directory path
     #[arg(long, env = "WEBDAV_ROOT", default_value = "/")]
     root: String,
-    /// Working directory, refresh_token will be stored in there if specified
-    #[arg(short = 'w', long)]
-    workdir: Option<PathBuf>,
     /// Delete file permanently instead of trashing it
     #[arg(long)]
     no_trash: bool,
@@ -100,6 +96,9 @@ struct Opt {
 
     #[command(subcommand)]
     subcommands: Option<Commands>,
+
+    #[arg(long, env = "REFRESH_CACHE_SECS_INTERVAL", default_value = "3600")]
+    refresh_cache_secs_interval: u64,
 }
 
 #[derive(Subcommand, Debug)]
@@ -124,10 +123,20 @@ enum QrCommand {
     },
 }
 
+pub fn start_periodic_invalidate(cache: Arc<Cache>, secs: u64) {
+    tokio::spawn(async move {
+        let mut ticker = interval(Duration::from_secs(secs));
+        loop {
+            ticker.tick().await;
+            cache.invalidate_all();
+        }
+    });
+}
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
     #[cfg(feature = "native-tls-vendored")]
-    openssl_probe::init_ssl_cert_env_vars();
+    openssl_probe::init_openssl_env_vars();
     let opt = Opt::parse();
     if env::var("RUST_LOG").is_err() {
         if opt.debug {
@@ -141,15 +150,10 @@ async fn main() -> anyhow::Result<()> {
         .with_timer(tracing_subscriber::fmt::time::time())
         .init();
 
-    let workdir = opt
-        .workdir
-        .or_else(|| dirs::cache_dir().map(|c| c.join("quarkdriver-webdav")));
     let drive_config = DriveConfig {
         api_base_url: "https://drive.quark.cn".to_string(),
         cookie: opt.quark_cookie.clone(),
     };
-    
-
     let auth_user = opt.auth_user;
     let auth_password = opt.auth_password;
     if (auth_user.is_some() && auth_password.is_none())
@@ -170,12 +174,9 @@ async fn main() -> anyhow::Result<()> {
         .set_upload_buffer_size(opt.upload_buffer_size)
         .set_skip_upload_same_size(opt.skip_upload_same_size)
         .set_prefer_http_download(opt.prefer_http_download);
-    fs.dir_cache.refresh_cache().await;
-    debug!("quarkdriver file system initialized");
-
+    let cache = Arc::new(fs.dir_cache.clone());
+    start_periodic_invalidate(cache.clone(), opt.refresh_cache_secs_interval);
     #[cfg(unix)]
-    let dir_cache = fs.dir_cache.clone();
-
     let mut dav_server_builder = DavHandler::builder()
         .filesystem(Box::new(fs))
         .locksystem(MemLs::new())
@@ -204,12 +205,11 @@ async fn main() -> anyhow::Result<()> {
 
     #[cfg(not(unix))]
     server.serve().await?;
-
     #[cfg(unix)]
     {
         let signals = Signals::new([SIGHUP])?;
         let handle = signals.handle();
-        let signals_task = tokio::spawn(handle_signals(signals, dir_cache));
+        let signals_task = tokio::spawn(handle_signals(signals, cache));
 
         server.serve().await?;
 
@@ -221,7 +221,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 #[cfg(unix)]
-async fn handle_signals(mut signals: Signals, dir_cache: Cache) {
+async fn handle_signals(mut signals: Signals, dir_cache: Arc<Cache>) {
     while let Some(signal) = signals.next().await {
         match signal {
             SIGHUP => {

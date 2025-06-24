@@ -31,7 +31,7 @@ impl QuarkFile {
             updated_at: now,
             dir: true,
             file: false,
-            file_name: "/".to_string(),
+            file_name: "".to_string(),
             fid: "0".to_string(),
             download_url: None,
         }
@@ -42,11 +42,6 @@ impl QuarkFile {
 #[derive(Debug, Serialize, Clone)]
 pub struct GetFilesDownloadUrlsRequest {
     pub fids: Vec<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct StreamInfo {
-    pub size: u64,
 }
 
 #[derive(Debug, Clone, Deserialize)]

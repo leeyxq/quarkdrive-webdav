@@ -1,12 +1,11 @@
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::io::{Cursor, SeekFrom, Write};
+use std::io::{SeekFrom};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
-use bytes::{Buf, BufMut, Bytes, BytesMut};
+use bytes::{Buf, Bytes, BytesMut};
 use dashmap::DashMap;
 use dav_server::{
     davpath::DavPath,
@@ -16,13 +15,10 @@ use dav_server::{
     },
 };
 use futures_util::future::{ready, FutureExt};
-use path_slash::{PathBufExt, PathExt};
-use tracing::{debug, error, trace, warn};
-use zip::write::{FileOptions, ZipWriter};
-
+use tracing::{debug, error, trace};
 use crate::{
     cache::Cache,
-    drive::{model::GetFilesDownloadUrlsResponse, QuarkDrive, QuarkFile},
+    drive::{QuarkDrive, QuarkFile},
 };
 
 #[derive(Clone)]
@@ -94,7 +90,7 @@ impl QuarkDriveFileSystem {
                 .ok_or(FsError::NotFound)?
                 .to_string_lossy()
                 .into_owned();
-            let file = self.dir_cache.get(&parent_str).await.and_then(|files| {
+            let file = self.dir_cache.get_or_insert(&parent_str).await.and_then(|files| {
                 for file in &files {
                     if file.file_name == file_name {
                         return Some(file.clone());
@@ -110,23 +106,16 @@ impl QuarkDriveFileSystem {
     }
 
     async fn get_file(&self, path: PathBuf) -> Result<Option<QuarkFile>, FsError> {
-        let path_str = path.to_slash_lossy();
         let file = self.find_in_cache(&path).await?;
         if let Some(file) = file {
             trace!(path = %path.display(), file_id = %file.fid, "file found in cache");
             Ok(Some(file))
         } else {
+            // find in drive
             Ok(None)
         }
     }
 
-
-
-
-    async fn cache_dir(&self, dir_path: String, files: Vec<QuarkFile>) {
-        trace!(path = %dir_path, count = files.len(), "cache dir");
-        self.dir_cache.insert(dir_path, files).await;
-    }
 
     fn normalize_dav_path(&self, dav_path: &DavPath) -> PathBuf {
         let path = dav_path.as_pathbuf();
@@ -146,7 +135,7 @@ impl DavFileSystem for QuarkDriveFileSystem {
         &'a self,
         dav_path: &'a DavPath,
         options: OpenOptions,
-    ) -> FsFuture<Box<dyn DavFile>> {
+    ) -> FsFuture<'a, Box<dyn DavFile>> {
         let path = self.normalize_dav_path(dav_path);
         let mode = if options.write { "write" } else { "read" };
         debug!(path = %path.display(), mode = %mode, "fs: open");
@@ -200,11 +189,11 @@ impl DavFileSystem for QuarkDriveFileSystem {
         &'a self,
         path: &'a DavPath,
         _meta: ReadDirMeta,
-    ) -> FsFuture<FsStream<Box<dyn DavDirEntry>>> {
+    ) -> FsFuture<'a, FsStream<Box<dyn DavDirEntry>>> {
         let path = self.normalize_dav_path(path);
         debug!(path = %path.display(), "fs: read_dir");
         async move {
-            let files = self.dir_cache.get(&path.to_string_lossy())
+            let files = self.dir_cache.get_or_insert(&path.to_string_lossy())
                 .await
                 .ok_or(FsError::NotFound)
                 .and_then(|files| {
@@ -230,7 +219,7 @@ impl DavFileSystem for QuarkDriveFileSystem {
             .boxed()
     }
 
-    fn metadata<'a>(&'a self, path: &'a DavPath) -> FsFuture<Box<dyn DavMetaData>> {
+    fn metadata<'a>(&'a self, path: &'a DavPath) -> FsFuture<'a, Box<dyn DavMetaData>> {
         let path = self.normalize_dav_path(path);
         debug!(path = %path.display(), "fs: metadata");
         async move {
@@ -436,8 +425,6 @@ impl DavFile for QuarkDavFile {
                     return Err(dav_server::fs::FsError::NotFound);
                 }
             };
-            let download_url =  self.file.download_url.as_ref().expect("download url missing!");
-            
 
             if !download_url.is_empty() {
                 let content = self.fs.drive.download(download_url, Some((self.current_pos, count))).await.unwrap();
