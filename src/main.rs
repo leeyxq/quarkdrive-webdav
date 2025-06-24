@@ -97,7 +97,7 @@ struct Opt {
     #[command(subcommand)]
     subcommands: Option<Commands>,
 
-    #[arg(long, env = "REFRESH_CACHE_SECS_INTERVAL", default_value = "3600")]
+    #[arg(long, env = "REFRESH_CACHE_SECS_INTERVAL", default_value = "300")]
     refresh_cache_secs_interval: u64,
 }
 
