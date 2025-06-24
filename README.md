@@ -24,13 +24,13 @@
 
 ```bash
 docker run -d --name=quarkdrive-webdav --restart=unless-stopped -p 8080:8080 \
-  -e COOKIE='you quark cookie' \
+  -e QUARK_COOKIE='you quark cookie' \
   -e WEBDAV_AUTH_USER=admin \
   -e WEBDAV_AUTH_PASSWORD=admin \
   ghcr.io/chenqimiao/quarkdrive-webdav:latest
 ```
 
-其中，`COOKIE` 环境变量为你的夸克云盘 `cookie`，`WEBDAV_AUTH_USER`
+其中，`QUARK_COOKIE` 环境变量为你的夸克云盘 `cookie`，`WEBDAV_AUTH_USER`
 和 `WEBDAV_AUTH_PASSWORD` 为连接 WebDAV 服务的用户名和密码。
 
 
