@@ -8,9 +8,9 @@ on:
         required: true
         default: 'main'
       docker_version:
-        description: '手动指定 Docker 版本（可选，main 分支默认 latest，其它分支/tag 默认与 ref 一致）'
+        description: 'Docker 版本（main 分支为 latest，其它分支/tag 与 ref 一致，可手动修改）'
         required: false
-        default: ''
+        default: 'latest'
 
 jobs:
   build:
@@ -28,12 +28,14 @@ jobs:
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          if [[ -n "${{ github.event.inputs.docker_version }}" ]]; then
-            echo "tag=${{ github.event.inputs.docker_version }}" >> $GITHUB_OUTPUT
-          elif [[ -z "${{ github.event.inputs.ref }}" || "${{ github.event.inputs.ref }}" == "main" ]]; then
+          tag_input="${{ github.event.inputs.docker_version }}"
+          ref_input="${{ github.event.inputs.ref }}"
+          if [[ -n "$tag_input" ]]; then
+            echo "tag=$tag_input" >> $GITHUB_OUTPUT
+          elif [[ "$ref_input" == "main" ]]; then
             echo "tag=latest" >> $GITHUB_OUTPUT
           else
-            echo "tag=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+            echo "tag=$ref_input" >> $GITHUB_OUTPUT
           fi
 
       - name: 登录 GitHub 容器注册表
