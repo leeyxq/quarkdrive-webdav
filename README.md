@@ -1,9 +1,8 @@
 # quarkdrive-webdav
 夸克网盘 WebDAV 服务
 
-[![GitHub Actions](https://github.com/chenqimiao/quarkdrive-webdav/workflows/CI/badge.svg)](https://github.com/chenqimiao/quarkdrive-webdav/actions?query=workflow%3ACI)
 [![Docker Image](https://img.shields.io/docker/pulls/chenqimiao/quarkdrive-webdav.svg?maxAge=2592000)](https://ghcr.io/chenqimiao/quarkdrive-webdav:latest/)
-[![Crates.io](https://img.shields.io/crates/v/aliyundrive-webdav.svg)](https://crates.io/crates/quarkdrive-webdav)
+[![Crates.io](https://img.shields.io/crates/v/quarkdrive-webdav.svg)](https://crates.io/crates/quarkdrive-webdav)
 
 
 夸克云盘 WebDAV 服务，主要使用场景为配合支持 WebDAV 协议的客户端 App 如 [Infuse](https://firecore.com/infuse)、[nPlayer](https://nplayer.com)
