@@ -7,9 +7,9 @@ on:
         description: 'Release 描述（可选）'
         required: false
         default: ''
-  push:
-    tags:
-      - '*'
+  # push:
+  #   tags:
+  #     - '*'
 
 jobs:
   build:
