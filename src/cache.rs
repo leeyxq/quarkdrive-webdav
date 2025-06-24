@@ -11,7 +11,7 @@ pub struct Cache {
     drive: QuarkDrive,
 }
 
-const ONE_PAGE: u32 = 50;
+const ONE_PAGE: u32 = 500;
 
 impl Cache {
     pub fn new(max_capacity: u64, ttl: u64, drive: QuarkDrive) -> Self {
@@ -38,11 +38,19 @@ impl Cache {
                     break;
                 }
                 path = parent;
+                if (path.to_str() == Some("/")) {
+                    break;
+                }
             }
-            let dsf_root_file = cached_files.iter().filter(|quark_file| {
-                quark_file.file_name == path.to_str().unwrap().split("/").last().unwrap()
-            }).last().cloned().unwrap();
-            self.dfs(dsf_root_file, key, path.to_str().unwrap()).await;
+            if (path.to_str() == Some("/")) {
+                self.dfs(QuarkFile::new_root(), key, "/").await;
+            }else {
+                let dsf_root_file = cached_files.iter().filter(|quark_file| {
+                    quark_file.file_name == path.to_str().unwrap().split("/").last().unwrap()
+                }).last().cloned().unwrap();
+                self.dfs(dsf_root_file, key, path.to_str().unwrap()).await;
+            }
+
         }
         if let Some(files) = self.get(key).await {
             Some(files)
@@ -55,11 +63,12 @@ impl Cache {
     async fn dfs(&self, file: QuarkFile, target_path: &str, dfs_path: &str) {
         if file.dir {
             let mut current_files = Vec::<QuarkFile>::new();
-            for page_no in 1..=204 {
+            for page_no in 1..=20 {
                 let (files, total) = self.drive.get_files_by_pdir_fid(&file.fid, page_no, ONE_PAGE).await.unwrap();
                 let files = files.unwrap();
                 let size = files.list.len();
                 current_files.extend(files.list);
+                // guess: es limit is 10000
                 if size < ONE_PAGE as usize || page_no >= total / ONE_PAGE + 1   {
                     break;
                 }
