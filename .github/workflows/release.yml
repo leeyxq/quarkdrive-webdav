@@ -7,6 +7,14 @@ on:
         description: '选择要打包的 tag 或分支'
         required: true
         default: 'main'
+      release_name:
+        description: 'Release 名称（可选，默认与 tag 或分支名一致）'
+        required: false
+        default: ''
+      release_body:
+        description: 'Release 描述（可选）'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -71,3 +79,15 @@ jobs:
             quarkdrive-webdav-${{ matrix.target }}.*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 设置 Release 名称
+        id: release_vars
+        run: |
+          if [[ -n "${{ github.event.inputs.release_name }}" ]]; then
+            echo "name=${{ github.event.inputs.release_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+          fi
+
+      # 你可以在后续创建 Release 的步骤中使用 ${{ steps.release_vars.outputs.name }} 作为 release 名称
+      # ${{ github.event.inputs.release_body }} 可作为 release 描述
