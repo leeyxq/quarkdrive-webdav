@@ -73,6 +73,7 @@ jobs:
         with:
           files: |
             quarkdrive-webdav-${{ matrix.target }}.*
+          body: ${{ github.event.inputs.release_body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
