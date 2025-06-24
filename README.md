@@ -1,7 +1,7 @@
 # quarkdrive-webdav
 夸克网盘 WebDAV 服务
 
-[![Docker Image](https://img.shields.io/docker/pulls/chenqimiao/quarkdrive-webdav.svg?maxAge=2592000)](https://ghcr.io/chenqimiao/quarkdrive-webdav:latest/)
+[![Docker Image](https://img.shields.io/badge/version-latest-blue)](https://ghcr.io/chenqimiao/quarkdrive-webdav)
 [![Crates.io](https://img.shields.io/crates/v/quarkdrive-webdav.svg)](https://crates.io/crates/quarkdrive-webdav)
 
 
