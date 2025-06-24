@@ -1,8 +1,9 @@
 # 构建阶段：Alpine + Rust nightly
 FROM alpine:3.19 as builder
 
-RUN apk add --no-cache build-base musl-dev openssl-dev pkgconf rustup binutils
-RUN rustup toolchain install nightly && rustup default nightly
+RUN apk add --no-cache build-base musl-dev openssl-dev pkgconf curl binutils
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
 WORKDIR /app
 COPY . .
 RUN cargo build --release && strip target/release/quarkdrive-webdav
