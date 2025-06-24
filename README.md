@@ -35,7 +35,7 @@ docker run -d --name=quarkdrive-webdav --restart=unless-stopped -p 8080:8080 \
   -e QUARK_COOKIE='you quark cookie' \
   -e WEBDAV_AUTH_USER=admin \
   -e WEBDAV_AUTH_PASSWORD=admin \
-  ghcr.io/chenqimiao/quarkdrive-webdav:latest
+  ghcr.io/chenqimiao/quarkdrive-webdav:main
 ```
 
 其中，`QUARK_COOKIE` 环境变量为你的夸克云盘 `cookie`，`WEBDAV_AUTH_USER`
