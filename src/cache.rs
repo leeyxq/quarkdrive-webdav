@@ -55,7 +55,7 @@ impl Cache {
     async fn dfs(&self, file: QuarkFile, target_path: &str, dfs_path: &str) {
         if file.dir {
             let mut current_files = Vec::<QuarkFile>::new();
-            for page_no in 1..=1000 {
+            for page_no in 1..=204 {
                 let (files, total) = self.drive.get_files_by_pdir_fid(&file.fid, page_no, ONE_PAGE).await.unwrap();
                 let files = files.unwrap();
                 let size = files.list.len();
