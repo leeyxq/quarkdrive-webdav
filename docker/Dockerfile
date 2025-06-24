@@ -1,20 +1,22 @@
-# 使用官方 Rust 镜像进行构建
+# 构建阶段
 FROM rustlang/rust:nightly as builder
+
+ARG TARGET=x86_64-unknown-linux-musl
 
 WORKDIR /app
 COPY . .
 
-# 构建 release 版本
-RUN cargo build --release
+RUN apt-get update && \
+    apt-get install -y musl-tools && \
+    rustup target add ${TARGET} && \
+    cargo build --release --target ${TARGET} && \
+    strip target/${TARGET}/release/quarkdrive-webdav
 
-# 使用更小的基础镜像运行
-FROM debian:bullseye-slim
-
+# 运行阶段（极简）
+FROM alpine:latest
+RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
-COPY --from=builder /app/target/release/quarkdrive-webdav /usr/local/bin/quarkdrive-webdav
-
-# 可选：复制静态文件或配置
-# COPY static/ /app/static/
-
-# 运行时可通过环境变量传递参数
+ARG TARGET=x86_64-unknown-linux-musl
+COPY --from=builder /app/target/${TARGET}/release/quarkdrive-webdav /usr/local/bin/quarkdrive-webdav
+USER app
 ENTRYPOINT ["/usr/local/bin/quarkdrive-webdav"]

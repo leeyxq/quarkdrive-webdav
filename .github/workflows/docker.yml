@@ -2,7 +2,8 @@ name: Build and Push Docker image
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '**'
   workflow_dispatch:
 
 jobs:
@@ -13,6 +14,15 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      - name: 设置 Docker 镜像标签
+        id: vars
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF##*/}" >> $GITHUB_OUTPUT
+          fi
+
       - name: 登录 GitHub 容器注册表
         uses: docker/login-action@v3
         with:
@@ -20,8 +30,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 构建并推送 Docker 镜像
+      - name: 设置 Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建并推送多架构 Docker 镜像
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/quarkdrive-webdav:latest
-          docker build -t $IMAGE_NAME -f docker/Dockerfile .
-          docker push $IMAGE_NAME
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -t ghcr.io/${{ github.repository_owner }}/quarkdrive-webdav:${{ steps.vars.outputs.tag }} \
+            --push \
+            -f docker/Dockerfile .
