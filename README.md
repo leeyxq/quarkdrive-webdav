@@ -28,6 +28,13 @@
 可以从 [GitHub Releases](https://github.com/chenqimiao/quarkdrive-webdav/releases) 页面下载预先构建的二进制包
 
 
+## 命令行启动
+
+```bash
+quarkdrive-webdav --quark-cookie "你的cookie" -U "用户名" -W "密码" -p 8080
+```
+
+
 ## Docker 运行
 
 ```bash
@@ -45,11 +52,6 @@ docker run -d --name=quarkdrive-webdav --restart=unless-stopped -p 8080:8080 \
 
 启动后，用webdav客户端连接http://nas地址:8080 即可
 
-## 命令行启动
-
-```bash
-quarkdrive-webdav --quark-cookie "你的cookie" -U "用户名" -W "密码" -p 8080
-```
 
 ## 🚨 免责声明
 
