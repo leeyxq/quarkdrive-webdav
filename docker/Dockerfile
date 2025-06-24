@@ -7,10 +7,8 @@ RUN apk add --no-cache build-base musl-dev openssl-dev openssl-libs-static pkgco
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
-RUN cargo fetch
-
 COPY . .
+RUN cargo fetch
 RUN cargo build --release && strip target/release/quarkdrive-webdav
 
 # 运行阶段：极简，仅需运行依赖
