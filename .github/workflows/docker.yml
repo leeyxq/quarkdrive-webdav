@@ -2,11 +2,6 @@ name: Build and Push Docker image
 
 on:
   workflow_dispatch:
-    inputs:
-      docker_version:
-        description: 'Docker 版本（main 分支为 latest，其它分支/tag 与 ref 一致，可手动修改）'
-        required: false
-        default: 'latest'
   push:
     tags:
       - '*'
@@ -32,12 +27,7 @@ jobs:
             tag_name="${GITHUB_REF##*/}"
             echo "tag=$tag_name" >> $GITHUB_OUTPUT
           else
-            tag_input="${{ github.event.inputs.docker_version }}"
-            if [[ -n "$tag_input" ]]; then
-              echo "tag=$tag_input" >> $GITHUB_OUTPUT
-            else
-              echo "tag=latest" >> $GITHUB_OUTPUT
-            fi
+            echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
       - name: 登录 GitHub 容器注册表
