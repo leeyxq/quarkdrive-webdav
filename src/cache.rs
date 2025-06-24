@@ -14,18 +14,12 @@ pub struct Cache {
 const ONE_PAGE: u32 = 50;
 
 impl Cache {
-    pub fn new(max_capacity: u64, ttl: u64) -> Self {
+    pub fn new(max_capacity: u64, ttl: u64, drive: QuarkDrive) -> Self {
         let inner = MokaCache::builder()
             .max_capacity(max_capacity)
             .time_to_live(Duration::from_secs(ttl))
             .build();
-
-        let config = DriveConfig {
-            api_base_url: "https://drive.quark.cn".to_string(),
-            cookie: Some(std::env::var("QUARK_COOKIE").unwrap()),
-        };
-        let drive = QuarkDrive::new(config).unwrap();
-
+        
         Self { inner , drive}
     }
     pub async fn get_or_insert(&self, key: &str) -> Option<Vec<QuarkFile>> {

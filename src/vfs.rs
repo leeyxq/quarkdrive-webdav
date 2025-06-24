@@ -37,7 +37,7 @@ pub struct QuarkDriveFileSystem {
 impl QuarkDriveFileSystem {
     #[allow(clippy::too_many_arguments)]
     pub fn new(drive: QuarkDrive, root: String, cache_size: u64, cache_ttl: u64) -> Result<Self> {
-        let dir_cache = Cache::new(cache_size, cache_ttl);
+        let dir_cache = Cache::new(cache_size, cache_ttl, drive.clone());
         debug!("dir cache initialized");
         let root = if root.starts_with('/') {
             PathBuf::from(root)
