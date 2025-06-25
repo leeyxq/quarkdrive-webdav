@@ -2,9 +2,6 @@ name: Build and Push Docker image
 
 on:
   workflow_dispatch:
-  # push:
-  #   tags:
-  #     - '*'
 
 jobs:
   build:
@@ -13,7 +10,6 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-        # 默认检出 main 分支，用户可在 docker_version 中手动指定 tag/分支名
         with:
           ref: ${{ github.ref_name }}
 
@@ -23,9 +19,13 @@ jobs:
       - name: 设置 Docker 镜像标签
         id: vars
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
-            tag_name="${GITHUB_REF##*/}"
-            echo "tag=$tag_name" >> $GITHUB_OUTPUT
+          ref="${{ github.ref }}"
+          if [[ "$ref" == "refs/heads/main" ]]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          elif [[ "$ref" == refs/tags/* ]]; then
+            echo "tag=${ref#refs/tags/}" >> $GITHUB_OUTPUT
+          elif [[ "$ref" == refs/heads/* ]]; then
+            echo "tag=${ref#refs/heads/}" >> $GITHUB_OUTPUT
           else
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
