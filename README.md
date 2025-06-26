@@ -70,6 +70,20 @@ services:
 
 启动后，用webdav客户端连接http://nas地址:8080 即可
 
+#新增部分（openwrt路由器上安装，cudy上已经验证）
+
+# 1. 上传到设备
+scp quarkdrive-webdav-openwrt-aarch64.tar.gz root@your-openwrt-device:/tmp/
+
+# 2. 在设备上解压
+cd /tmp && tar -xzf quarkdrive-webdav-openwrt-aarch64.tar.gz
+
+# 3. 选择版本（推荐使用压缩版节省空间）
+chmod +x quarkdrive-webdav.upx
+./quarkdrive-webdav.upx --help
+
+# 4. 移动到系统目录
+mv quarkdrive-webdav.upx /usr/bin/quarkdrive-webdav
 
 ## 🚨 免责声明
 
