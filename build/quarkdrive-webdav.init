@@ -1,0 +1,180 @@
+#!/bin/sh /etc/rc.common
+
+# OpenWrt 启动脚本 for QuarkDrive WebDAV
+# 作者: QuarkDrive Team
+# 版本: 1.0.9
+
+START=99
+STOP=10
+
+USE_PROCD=1
+
+# 服务配置
+PROG="/usr/bin/quarkdrive-webdav"
+PROG_NAME="quarkdrive-webdav"
+
+# 默认配置 - 可以通过 UCI 系统配置覆盖
+QUARK_COOKIE=""
+QUARK_USER="admin"
+QUARK_PASSWORD="admin"
+QUARK_PORT="8000"
+
+# 日志配置
+LOG_FILE="/var/log/quarkdrive-webdav.log"
+ERR_FILE="/var/log/quarkdrive-webdav.err"
+
+# 加载 UCI 配置（如果存在）
+load_config() {
+    config_load 'quarkdrive'
+    
+    config_get cookie 'config' 'cookie' "$QUARK_COOKIE"
+    config_get username 'config' 'username' "$QUARK_USER" 
+    config_get password 'config' 'password' "$QUARK_PASSWORD"
+    config_get port 'config' 'port' "$QUARK_PORT"
+    
+    QUARK_COOKIE="$cookie"
+    QUARK_USER="$username"
+    QUARK_PASSWORD="$password"
+    QUARK_PORT="$port"
+}
+
+# 验证配置
+validate_config() {
+    # 检查可执行文件是否存在
+    if [ ! -f "$PROG" ]; then
+        echo "错误: 找不到可执行文件 $PROG" >&2
+        return 1
+    fi
+    
+    # 检查必要参数
+    if [ -z "$QUARK_COOKIE" ] || [ -z "$QUARK_USER" ] || [ -z "$QUARK_PASSWORD" ]; then
+        echo "错误: 缺少必要的配置参数" >&2
+        return 1
+    fi
+    
+    # 检查端口号
+    if ! echo "$QUARK_PORT" | grep -qE '^[0-9]+$'; then
+        echo "错误: 端口号格式不正确: $QUARK_PORT" >&2
+        return 1
+    fi
+    
+    return 0
+}
+
+# 创建日志目录
+setup_logging() {
+    mkdir -p "$(dirname "$LOG_FILE")"
+    mkdir -p "$(dirname "$ERR_FILE")"
+}
+
+# procd 启动函数
+start_service() {
+    echo "正在启动 QuarkDrive WebDAV 服务..."
+    
+    # 加载配置
+    load_config
+    
+    # 验证配置
+    if ! validate_config; then
+        echo "配置验证失败，服务启动中止" >&2
+        return 1
+    fi
+    
+    # 设置日志
+    setup_logging
+    
+    echo "使用配置: 用户=$QUARK_USER, 端口=$QUARK_PORT" >> "$LOG_FILE"
+    
+    # 启动服务
+    procd_open_instance
+    procd_set_param command "$PROG" \
+        --quark-cookie "$QUARK_COOKIE" \
+        -U "$QUARK_USER" \
+        -W "$QUARK_PASSWORD" \
+        -p "$QUARK_PORT"
+        
+    procd_set_param respawn ${respawn_threshold:-3600} ${respawn_timeout:-5} ${respawn_retry:-5}
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param file /etc/config/quarkdrive
+    
+    # 设置用户和组
+    procd_set_param user root
+    procd_set_param group root
+    
+    # 设置工作目录
+    procd_set_param pidfile /var/run/quarkdrive-webdav.pid
+    
+    procd_close_instance
+    
+    echo "QuarkDrive WebDAV 服务启动完成，监听端口: $QUARK_PORT"
+}
+
+# 停止服务
+stop_service() {
+    echo "正在停止 QuarkDrive WebDAV 服务..."
+    
+    # procd 会自动处理进程停止
+    echo "$(date): QuarkDrive WebDAV 服务已停止" >> "$LOG_FILE"
+}
+
+
+
+# 扩展命令处理
+service_extra_commands() {
+    echo "status info logs"
+}
+
+# 处理扩展命令
+status() {
+    local pid_file="/var/run/quarkdrive-webdav.pid"
+    
+    if [ -f "$pid_file" ]; then
+        local pid=$(cat "$pid_file")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "QuarkDrive WebDAV 服务正在运行 (PID: $pid)"
+            return 0
+        else
+            echo "QuarkDrive WebDAV 服务已停止 (僵尸进程)"
+            return 1
+        fi
+    else
+        echo "QuarkDrive WebDAV 服务已停止"
+        return 3
+    fi
+}
+
+info() {
+    echo "========================================="
+    echo "QuarkDrive WebDAV 服务信息"
+    echo "========================================="
+    echo "程序路径: $PROG"
+    echo "配置文件: /etc/config/quarkdrive"
+    echo "日志文件: $LOG_FILE"
+    echo "错误日志: $ERR_FILE"
+    echo "PID文件: /var/run/quarkdrive-webdav.pid"
+    echo "========================================="
+    status
+}
+
+logs() {
+    local lines=${1:-20}
+    echo "========================================="
+    echo "QuarkDrive WebDAV 最近 $lines 行日志:"
+    echo "========================================="
+    if [ -f "$LOG_FILE" ]; then
+        tail -n "$lines" "$LOG_FILE"
+    else
+        echo "日志文件不存在: $LOG_FILE"
+    fi
+    
+    echo ""
+    echo "========================================="
+    echo "错误日志:"
+    echo "========================================="
+    if [ -f "$ERR_FILE" ]; then
+        tail -n "$lines" "$ERR_FILE"
+    else
+        echo "错误日志文件不存在: $ERR_FILE"
+    fi
+} 

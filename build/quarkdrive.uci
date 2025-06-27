@@ -1,0 +1,18 @@
+# QuarkDrive WebDAV UCI 配置文件
+# 该文件应该放置在 /etc/config/quarkdrive
+
+config config 'config'
+	# Quark Drive Cookie 认证信息 (必填)
+	option cookie 'Video-Auth=xxxx'
+	
+	# 用户名 (必填)
+	option username 'admin'
+	
+	# 密码 (必填)
+	option password 'admin'
+	
+	# 监听端口 (默认: 8000)
+	option port '8000'
+	
+	# 是否启用服务 (默认: 1)
+	option enabled '1' 
